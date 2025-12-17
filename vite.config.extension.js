@@ -22,7 +22,9 @@ export default defineConfig({
     },
     cssCodeSplit: false,
     define: {
-      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.NODE_ENV': '\"production\"',
+      'process.env': '{}',
+      'global': 'globalThis',
     },
     rollupOptions: {
       // Bundle everything (no externals) so content script is standalone
@@ -35,6 +37,8 @@ export default defineConfig({
           if (name.endsWith('.css')) return 'style.css'
           return '[name][extname]'
         },
+        // Add process polyfill banner at the very top of the bundle
+        banner: '(function(){if(typeof globalThis.process===\"undefined\"){globalThis.process={env:{NODE_ENV:\"production\"},emit:function(){},nextTick:function(f){Promise.resolve().then(f)}}}})();',
       },
     },
     target: 'chrome105',

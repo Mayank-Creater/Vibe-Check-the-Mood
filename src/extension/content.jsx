@@ -3,6 +3,16 @@
   - Detects active video calls by scanning <video> elements
   - Mounts a React overlay that shows the detected vibe
 */
+
+// CRITICAL: Polyfill process before any imports that might reference it
+if (typeof globalThis !== 'undefined' && typeof globalThis.process === 'undefined') {
+  globalThis.process = {
+    env: { NODE_ENV: 'production' },
+    emit: function() {},
+    nextTick: function(fn) { Promise.resolve().then(fn); }
+  };
+}
+
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -12,12 +22,6 @@ import '@/index.css'
 // Use a lightweight overlay without framer-motion to avoid peer conflicts
 import VibeOverlay from './VibeOverlayLite.jsx'
 import { useVibeDetection } from '@/hooks/useVibeDetection.js'
-
-// Minimal process shim for environments (e.g., Chrome content scripts) that lack it
-if (typeof window !== 'undefined' && typeof window.process === 'undefined') {
-  // eslint-disable-next-line no-undef
-  window.process = { env: {} }
-}
 
 const CALL_HOST_HINTS = [
   'meet.google.com',
