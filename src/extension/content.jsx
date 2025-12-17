@@ -64,6 +64,12 @@ function VibeOverlayContainer() {
   const [activeVideo, setActiveVideo] = useState(null)
   const [enabled, setEnabled] = useState(true)
 
+  useEffect(() => {
+    // Debug hook to confirm script injection
+    // eslint-disable-next-line no-console
+    console.info('[VibeCheck] content script mounted', { href: window.location.href })
+  }, [])
+
   // Adapter ref to satisfy useVibeDetection which expects webcamRef.current.video
   const webcamLikeRef = useRef({ video: null })
 
@@ -80,7 +86,7 @@ function VibeOverlayContainer() {
       const v = findLargestActiveVideo()
       if (v && v !== activeVideo) setActiveVideo(v)
     }
-    const interval = window.setInterval(rescan, 1500)
+    const interval = window.setInterval(rescan, 1200)
     const mo = new MutationObserver((muts) => {
       for (const m of muts) {
         if (m.addedNodes.length || m.removedNodes.length || m.attributeName === 'class' || m.attributeName === 'style') {
@@ -107,7 +113,7 @@ function VibeOverlayContainer() {
   // Small control button
   const toggle = () => setEnabled((v) => !v)
 
-  if (!isCall) return null
+  // Always mount container so we can debug/force enable; hide card when not on a call
 
   return (
     <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 2147483647 }}>
@@ -123,7 +129,7 @@ function VibeOverlayContainer() {
       </div>
 
       {/* The overlay card */}
-      {enabled && (
+      {enabled && isCall && (
         <div style={{ position: 'fixed', right: 0, bottom: 0, pointerEvents: 'none' }}>
           <div style={{ position: 'relative', pointerEvents: 'auto' }}>
             <VibeOverlay
