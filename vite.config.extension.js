@@ -21,6 +21,9 @@ export default defineConfig({
       fileName: () => 'contentScript.js',
     },
     cssCodeSplit: false,
+    define: {
+      'process.env.NODE_ENV': JSON.stringify('production'),
+    },
     rollupOptions: {
       // Bundle everything (no externals) so content script is standalone
       external: [],

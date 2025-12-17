@@ -13,6 +13,12 @@ import '@/index.css'
 import VibeOverlay from './VibeOverlayLite.jsx'
 import { useVibeDetection } from '@/hooks/useVibeDetection.js'
 
+// Minimal process shim for environments (e.g., Chrome content scripts) that lack it
+if (typeof window !== 'undefined' && typeof window.process === 'undefined') {
+  // eslint-disable-next-line no-undef
+  window.process = { env: {} }
+}
+
 const CALL_HOST_HINTS = [
   'meet.google.com',
   'zoom.us',
