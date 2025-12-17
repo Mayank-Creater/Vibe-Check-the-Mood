@@ -1,0 +1,29 @@
+{
+  "name": "Vibe Check — Call Vibe Overlay",
+  "description": "Detects video calls and overlays the current vibe on the page.",
+  "version": "0.1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_title": "Vibe Check"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": ["contentScript.js"],
+      "css": ["style.css"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+  
+}
