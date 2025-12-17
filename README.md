@@ -23,3 +23,5 @@ This outputs the unpacked extension into `dist-extension/` (including `manifest.
 - Models are loaded from a CDN; if blocked, detection falls back to Simulation Mode automatically.
 - The overlay analyzes the largest visible `<video>` element on the page when present.
 - You can continue to run the original app locally via `npm run dev` if desired; it remains unchanged.
+- Shadow DOM: The overlay renders inside a shadow root and uses the bundled `style.css` so page styles don’t leak.
+- Options page: Manage allowed domains at `chrome://extensions` → Vibe Check → Details → Extension options. Domains are matched by hostname substring.

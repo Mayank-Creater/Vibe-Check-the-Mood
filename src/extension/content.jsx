@@ -9,8 +9,8 @@ if (typeof globalThis !== 'undefined' && typeof globalThis.process === 'undefine
   globalThis.process = {
     env: { NODE_ENV: 'production' },
     emit: function() {},
-    nextTick: function(fn) { Promise.resolve().then(fn); }
-  };
+    nextTick: function(fn) { Promise.resolve().then(fn) },
+  }
 }
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -19,8 +19,8 @@ import { createRoot } from 'react-dom/client'
 // Bring in Tailwind styles and base app styles into the content script bundle
 import '@/index.css'
 
-// Use a lightweight overlay without framer-motion to avoid peer conflicts
-import VibeOverlay from './VibeOverlayLite.jsx'
+// Use the animated overlay
+import VibeOverlay from '@/components/VibeOverlay.jsx'
 import { useVibeDetection } from '@/hooks/useVibeDetection.js'
 
 const CALL_HOST_HINTS = [
@@ -34,6 +34,8 @@ const CALL_HOST_HINTS = [
   'slack.com',
   'jitsi',
 ]
+
+const DEFAULT_ALLOWED_DOMAINS = CALL_HOST_HINTS
 
 function isLikelyCallEnvironment() {
   const href = window.location.href.toLowerCase()
@@ -73,11 +75,37 @@ function findLargestActiveVideo() {
 function VibeOverlayContainer() {
   const [activeVideo, setActiveVideo] = useState(null)
   const [enabled, setEnabled] = useState(true)
+  const [allowedDomains, setAllowedDomains] = useState(DEFAULT_ALLOWED_DOMAINS)
 
   useEffect(() => {
     // Debug hook to confirm script injection
     // eslint-disable-next-line no-console
     console.info('[VibeCheck] content script mounted', { href: window.location.href })
+  }, [])
+
+  // Load allow-list from storage and listen for changes
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.storage?.sync) return
+    chrome.storage.sync.get({ allowedDomains: DEFAULT_ALLOWED_DOMAINS }, (res) => {
+      if (Array.isArray(res.allowedDomains) && res.allowedDomains.length > 0) {
+        setAllowedDomains(res.allowedDomains)
+      }
+    })
+
+    const handleChanges = (changes, area) => {
+      if (area !== 'sync') return
+      if (changes.allowedDomains) {
+        const next = changes.allowedDomains.newValue
+        if (Array.isArray(next) && next.length > 0) {
+          setAllowedDomains(next)
+        }
+      }
+    }
+
+    chrome.storage.onChanged?.addListener(handleChanges)
+    return () => {
+      chrome.storage.onChanged?.removeListener(handleChanges)
+    }
   }, [])
 
   // Adapter ref to satisfy useVibeDetection which expects webcamRef.current.video
@@ -114,9 +142,14 @@ function VibeOverlayContainer() {
     }
   }, [])
 
+  const isAllowedDomain = useMemo(() => {
+    const host = window.location.hostname?.toLowerCase?.() || ''
+    return allowedDomains.some((d) => host.includes(d.toLowerCase()))
+  }, [allowedDomains])
+
   const isCall = useMemo(() => {
-    return !!activeVideo || isLikelyCallEnvironment()
-  }, [activeVideo])
+    return isAllowedDomain && (!!activeVideo || isLikelyCallEnvironment())
+  }, [activeVideo, isAllowedDomain])
 
   const detection = useVibeDetection(webcamLikeRef, enabled && isCall)
 
@@ -156,13 +189,30 @@ function VibeOverlayContainer() {
 }
 
 function mount() {
-  if (document.getElementById('vibe-check-overlay-root')) return
+  if (document.getElementById('vibe-check-overlay-root-host')) return
 
-  const container = document.createElement('div')
-  container.id = 'vibe-check-overlay-root'
-  document.documentElement.appendChild(container)
+  const host = document.createElement('div')
+  host.id = 'vibe-check-overlay-root-host'
+  host.style.position = 'fixed'
+  host.style.inset = '0'
+  host.style.pointerEvents = 'none'
+  host.style.zIndex = '2147483647'
 
-  const root = createRoot(container)
+  const shadow = host.attachShadow({ mode: 'open' })
+
+  const linkEl = document.createElement('link')
+  linkEl.rel = 'stylesheet'
+  linkEl.href = (typeof chrome !== 'undefined' && chrome.runtime?.getURL)
+    ? chrome.runtime.getURL('style.css')
+    : 'style.css'
+  shadow.appendChild(linkEl)
+
+  const app = document.createElement('div')
+  shadow.appendChild(app)
+
+  document.documentElement.appendChild(host)
+
+  const root = createRoot(app)
   root.render(<VibeOverlayContainer />)
 }
 
