@@ -27,7 +27,11 @@ export default defineConfig({
       output: {
         entryFileNames: 'contentScript.js',
         chunkFileNames: 'contentScript.[name].js',
-        assetFileNames: '[name][extname]',
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.name || ''
+          if (name.endsWith('.css')) return 'style.css'
+          return '[name][extname]'
+        },
       },
     },
     target: 'chrome105',
