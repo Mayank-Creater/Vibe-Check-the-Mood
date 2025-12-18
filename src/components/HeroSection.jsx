@@ -140,16 +140,6 @@ const HeroSection = ({ onStartSession }) => {
             </motion.div>
           </motion.button>
         </motion.div>
-
-        {/* Floating description */}
-        <motion.div
-          variants={itemVariants}
-          className="mt-16 p-6 rounded-xl bg-gradient-to-r from-purple-600/10 to-pink-600/10 border border-purple-500/20 backdrop-blur-md"
-        >
-          <p className="text-sm text-slate-300">
-            ✨ This session includes a <span className="text-purple-400 font-semibold">Simulation Mode</span> to explore emotion detection. Real computer vision integration coming soon.
-          </p>
-        </motion.div>
       </motion.div>
     </motion.div>
   )
